@@ -58,7 +58,7 @@ socket.on('data', function(data) {
 
 parser.on('reply', function (d) {
   console.log('>> Parser Reply')
-  console.log(typeof d, d.toString())
+  console.log(typeof d, d ? d.toString() : d)
 })
 parser.on('reply partial', function (d) {
   console.log('>> Parser Reply Partial')

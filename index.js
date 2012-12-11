@@ -18,6 +18,7 @@ function Parser(options) {
   this._line = ''
   this._cr = false
   this._size = 0
+  this._skip = 0
 }
 inherits(Parser, EventEmitter)
 
@@ -29,10 +30,10 @@ inherits(Parser, EventEmitter)
  */
 
 Parser.prototype.execute = function (data) {
-  var length = data.length
-  this._offset = 0
   this._data = data
-
+  this._offset = Math.min(this._skip, this._data.length)
+  this._skip -= this._offset
+  
   while (this._offset < this._data.length) {
     if (this._state === START) {
       this._line = ''
@@ -65,6 +66,9 @@ Parser.prototype.execute = function (data) {
       else {
         this._reply(this._data.slice(this._offset, this._offset += this._size))
         this._offset += 2
+        if (this._offset > this._data.length) {
+          this._skip = this._offset - this._data.length
+        }
       }
     }
     else if (this._untilCRLF()) {
