@@ -37,7 +37,7 @@ var parser = new Parser
 socket.on('connect', function() {
   run(['PING'])
   run(['SET', 'foo', 'barbar'])
-
+  run(['STRLEN', 'foo'])
   listenStdin()
 })
 
@@ -57,7 +57,7 @@ socket.on('data', function(data) {
 
 parser.on('reply', function (d) {
   console.log('>> Parser Reply')
-  console.log(d.toString())
+  console.log(typeof d, d.toString())
 })
 parser.on('reply error', function (d) {
   console.log('>> Parser Reply Error')

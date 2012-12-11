@@ -55,16 +55,23 @@ Parser.prototype.execute = function (data) {
           this.emit('error', new Error('Expecting one of +-:$*'))
       }
     }
-    else if (this._state === SINGLE) {
-      if (this._untilCRLF()) {
-        this.emit('reply', this._line)
-        this._state = START
-      }
-    }
-    else {
+    else if (this._state === BULK_DATA) {
       this._offset++
     }
+    else if (this._untilCRLF()) {
+      if (this._state === SINGLE) {
+        this._reply(this._line)
+      }
+      else if (this._state === INTEGER) {
+        this._reply(+this._line)
+      }
+    }
   }
+}
+
+Parser.prototype._reply = function (reply) {
+  this.emit('reply', reply)
+  this._state = START
 }
 
 Parser.prototype._untilCRLF = function () {
