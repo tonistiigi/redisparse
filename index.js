@@ -65,12 +65,15 @@ Parser.prototype.execute = function (data) {
       else if (this._state === INTEGER) {
         this._reply(+this._line)
       }
+      else if (this._state === ERROR) {
+        this._reply(this._line, 'reply error')
+      }
     }
   }
 }
 
-Parser.prototype._reply = function (reply) {
-  this.emit('reply', reply)
+Parser.prototype._reply = function (reply, type) {
+  this.emit(type || 'reply', reply)
   this._state = START
 }
 

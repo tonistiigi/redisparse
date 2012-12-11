@@ -38,6 +38,7 @@ socket.on('connect', function() {
   run(['PING'])
   run(['SET', 'foo', 'barbar'])
   run(['STRLEN', 'foo'])
+  run(['nosuchcommand'])
   listenStdin()
 })
 
