@@ -17,6 +17,7 @@ function Parser(options) {
   this._data = null
   this._line = ''
   this._cr = false
+  this._size = 0
 }
 inherits(Parser, EventEmitter)
 
@@ -56,7 +57,15 @@ Parser.prototype.execute = function (data) {
       }
     }
     else if (this._state === BULK_DATA) {
-      this._offset++
+      if (this._data.length - this._offset < this._size) { // Partial.
+        this.emit('reply partial', this._data.slice(this._offset))
+        this._size -= this._data.length - this._offset
+        this._offset = this._data.length
+      }
+      else {
+        this._reply(this._data.slice(this._offset, this._offset += this._size))
+        this._offset += 2
+      }
     }
     else if (this._untilCRLF()) {
       if (this._state === SINGLE) {
@@ -67,6 +76,15 @@ Parser.prototype.execute = function (data) {
       }
       else if (this._state === ERROR) {
         this._reply(this._line, 'reply error')
+      }
+      else if (this._state === BULK) {
+        this._size = +this._line
+        if (this._size === -1) {
+          this._reply(null)
+        }
+        else {
+          this._state = BULK_DATA
+        }
       }
     }
   }

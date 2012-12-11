@@ -60,6 +60,10 @@ parser.on('reply', function (d) {
   console.log('>> Parser Reply')
   console.log(typeof d, d.toString())
 })
+parser.on('reply partial', function (d) {
+  console.log('>> Parser Reply Partial')
+  console.log(typeof d, d.toString())
+})
 parser.on('reply error', function (d) {
   console.log('>> Parser Reply Error')
   console.log(d.toString())
