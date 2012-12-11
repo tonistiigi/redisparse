@@ -15,7 +15,8 @@ function Parser(options) {
   this._state = START
   this._offset = 0
   this._data = null
-
+  this._line = ''
+  this._cr = false
 }
 inherits(Parser, EventEmitter)
 
@@ -33,6 +34,7 @@ Parser.prototype.execute = function (data) {
 
   while (this._offset < this._data.length) {
     if (this._state === START) {
+      this._line = ''
       switch (this._data[this._offset++]) {
         case 43: // +
           this._state = SINGLE
@@ -54,13 +56,35 @@ Parser.prototype.execute = function (data) {
       }
     }
     else if (this._state === SINGLE) {
-      this.emit('reply', 'test')
-      return
+      if (this._untilCRLF()) {
+        this.emit('reply', this._line)
+        this._state = START
+      }
     }
     else {
       this._offset++
     }
   }
+}
+
+Parser.prototype._untilCRLF = function () {
+  if (this._cr && this._data[this._offset] === 0xa) {
+    this._cr = false
+    this._line = this._line.substring(0, this._line.length - 1) // Remove buffered <CR>
+    this._offset++
+  }
+  else {
+    while (this._data[this._offset] !== 0xd || this._data[this._offset + 1] !== 0xa) {
+      this._line += String.fromCharCode(this._data[this._offset])
+      if (this._offset + 1 === this._data.length) { // No more data.
+        if (this._data[this._offset] === 0xd) this._cr = true // Remember last <CR>
+        return
+      }
+      this._offset++
+    }
+    this._offset += 2
+  }
+  return this._line
 }
 
 exports.Parser = Parser
