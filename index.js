@@ -12,9 +12,10 @@ var MULTI_BULK = 0x7
 
 function Parser(options) {
   this.options = options || {}
-  this.state = START
-  this.offset = 0
-  this.data = null
+  this._state = START
+  this._offset = 0
+  this._data = null
+
 }
 inherits(Parser, EventEmitter)
 
@@ -27,37 +28,37 @@ inherits(Parser, EventEmitter)
 
 Parser.prototype.execute = function (data) {
   var length = data.length
-  this.offset = 0
-  this.data = data
+  this._offset = 0
+  this._data = data
 
-  while (this.offset < this.data.length) {
-    if (this.state === START) {
-      switch (this.data[this.offset++]) {
+  while (this._offset < this._data.length) {
+    if (this._state === START) {
+      switch (this._data[this._offset++]) {
         case 43: // +
-          this.state = SINGLE
+          this._state = SINGLE
         break;
         case 58: // :
-          this.state = INTEGER
+          this._state = INTEGER
         break;
         case 45: // -
-          this.state = ERROR
+          this._state = ERROR
         break;
         case 36: // $
-          this.state = BULK
+          this._state = BULK
         break;
         case 42: // *
-          this.state = MULTI_BULK
+          this._state = MULTI_BULK
         break;
         default:
           this.emit('error', new Error('Expecting one of +-:$*'))
       }
     }
-    else if (this.state === SINGLE) {
+    else if (this._state === SINGLE) {
       this.emit('reply', 'test')
       return
     }
     else {
-      this.offset++
+      this._offset++
     }
   }
 }
