@@ -1,5 +1,6 @@
 var net = require('net')
 var Parser = require('../').Parser
+var argv = require('optimist').argv
 
 function command(args) {
   return args.reduce(function (memo, val) {
@@ -22,6 +23,14 @@ function listenStdin() {
   })
 }
 
+// Split data into chucks.
+function slice(buffer, size, f) {
+  for (var i = 0; i < buffer.length; i += size) {
+    f(buffer.slice(i, Math.min(buffer.length, i + size)))
+  }
+}
+
+
 var socket = net.connect(6379)
 var parser = new Parser
 
@@ -33,9 +42,17 @@ socket.on('connect', function() {
 })
 
 socket.on('data', function(data) {
-  console.log('>> Data:')
-  console.log(data.toString())
-  parser.execute(data)
+  function process(data) {
+    console.log('>> Data:')
+    console.log(data.toString())
+    parser.execute(data)
+  }
+  if (+argv.slice) {
+    slice(data, +argv.slice, function (d) { process(d) })
+  }
+  else {
+    process(data)
+  }
 })
 
 parser.on('reply', function (d) {

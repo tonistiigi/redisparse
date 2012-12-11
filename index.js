@@ -76,11 +76,12 @@ Parser.prototype._untilCRLF = function () {
   else {
     while (this._data[this._offset] !== 0xd || this._data[this._offset + 1] !== 0xa) {
       this._line += String.fromCharCode(this._data[this._offset])
-      if (this._offset + 1 === this._data.length) { // No more data.
-        if (this._data[this._offset] === 0xd) this._cr = true // Remember last <CR>
+      this._offset++
+      if (this._offset === this._data.length) { // No more data.
+        if (this._data[this._offset - 1] === 0xd) this._cr = true // Remember last <CR>
+
         return
       }
-      this._offset++
     }
     this._offset += 2
   }
