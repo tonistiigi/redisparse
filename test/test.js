@@ -12,11 +12,22 @@ function run(args) {
   socket.write(command(args))
 }
 
+function listenStdin() {
+  process.stdin.resume()
+  process.stdin.on('data', function(data) {
+    var s = data.toString()
+    s = s.substr(0, s.length - 1)
+    if (s.length) run(s.split(' '))
+  })
+}
+
 var socket = net.connect(6379)
 
 socket.on('connect', function() {
   run(['PING'])
   run(['SET', 'foo', 'barbar'])
+
+  listenStdin()
 })
 
 socket.on('data', function(data) {
