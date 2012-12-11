@@ -1,4 +1,5 @@
 var net = require('net')
+var Parser = require('../').Parser
 
 function command(args) {
   return args.reduce(function (memo, val) {
@@ -22,6 +23,7 @@ function listenStdin() {
 }
 
 var socket = net.connect(6379)
+var parser = new Parser
 
 socket.on('connect', function() {
   run(['PING'])
@@ -33,6 +35,20 @@ socket.on('connect', function() {
 socket.on('data', function(data) {
   console.log('>> Data:')
   console.log(data.toString())
+  parser.execute(data)
+})
+
+parser.on('reply', function (d) {
+  console.log('>> Parser Reply')
+  console.log(d.toString())
+})
+parser.on('reply error', function (d) {
+  console.log('>> Parser Reply Error')
+  console.log(d.toString())
+})
+parser.on('error', function (e) {
+  console.log('>> Parser Error')
+  console.log(e)
 })
 
 
