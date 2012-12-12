@@ -93,7 +93,12 @@ Parser.prototype.execute = function (data) {
         this._reply(this._line)
       }
       else if (this._state === INTEGER) {
-        this._reply(+this._line)
+        if (this.options.return_buffers) {
+          this._reply(new Buffer(this._line))
+        }
+        else {
+          this._reply(+this._line)
+        }
       }
       else if (this._state === ERROR) {
         this._reply(this._line, 'reply error')
