@@ -92,11 +92,11 @@ Parser.prototype.execute = function (data) {
       }
       else if (this._state === MULTI_BULK) {
         var count = +this._line
-        if (c > 0) {
+        if (count > 0) {
           this._multibulk = new Multibulk(count)
           this._state = START
         }
-        else if (c === 0) {
+        else if (count === 0) {
           this._reply([])
         }
         else { // -1
@@ -108,10 +108,14 @@ Parser.prototype.execute = function (data) {
 }
 
 Parser.prototype._reply = function (reply, type) {
+  this._state = START
   if (this._multibulk) {
+    this._multibulk.items.push(reply)
+    if (--this._multibulk.count) return
+    reply = this._multibulk.items
+    this._multibulk = null
   }
   this.emit(type || 'reply', reply)
-  this._state = START
 }
 
 Parser.prototype._untilCRLF = function () {
