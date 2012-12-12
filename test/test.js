@@ -39,6 +39,7 @@ socket.on('connect', function() {
   run(['SET', 'foo', 'barbar'])
   run(['STRLEN', 'foo'])
   run(['nosuchcommand'])
+  run(['get', 'foo'])
   listenStdin()
 })
 

@@ -9,7 +9,6 @@ var BULK = 0x5
 var BULK_DATA = 0x6
 var MULTI_BULK = 0x7
 
-
 function Parser(options) {
   this.options = options || {}
   this._state = START
@@ -19,6 +18,7 @@ function Parser(options) {
   this._cr = false
   this._size = 0
   this._skip = 0
+  this._multibulk = null
 }
 inherits(Parser, EventEmitter)
 
@@ -33,7 +33,7 @@ Parser.prototype.execute = function (data) {
   this._data = data
   this._offset = Math.min(this._skip, this._data.length)
   this._skip -= this._offset
-  
+
   while (this._offset < this._data.length) {
     if (this._state === START) {
       this._line = ''
@@ -90,11 +90,26 @@ Parser.prototype.execute = function (data) {
           this._state = BULK_DATA
         }
       }
+      else if (this._state === MULTI_BULK) {
+        var count = +this._line
+        if (c > 0) {
+          this._multibulk = new Multibulk(count)
+          this._state = START
+        }
+        else if (c === 0) {
+          this._reply([])
+        }
+        else { // -1
+          this._reply(null)
+        }
+      }
     }
   }
 }
 
 Parser.prototype._reply = function (reply, type) {
+  if (this._multibulk) {
+  }
   this.emit(type || 'reply', reply)
   this._state = START
 }
@@ -118,6 +133,11 @@ Parser.prototype._untilCRLF = function () {
     this._offset += 2
   }
   return this._line
+}
+
+function Multibulk(count) {
+  this.count = count
+  this.items = []
 }
 
 exports.Parser = Parser
