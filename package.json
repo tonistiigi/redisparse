@@ -16,6 +16,9 @@
   ],
   "author": "Tõnis Tiigi <tonistiigi@gmail.com>",
   "license": "MIT",
+  "dependencies": {
+    "array_decoder": "*"
+  },
   "devDependencies": {
     "optimist": "~0.3.5"
   }

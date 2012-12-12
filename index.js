@@ -1,5 +1,6 @@
 var EventEmitter = require('events').EventEmitter
 var inherits = require('util').inherits
+var ArrayDecoder = require('array_decoder').ArrayDecoder
 
 var START = 0x1
 var SINGLE = 0x2
@@ -19,6 +20,8 @@ function Parser(options) {
   this._size = 0
   this._skip = 0
   this._multibulk = null
+  this._array_decoder = new ArrayDecoder(
+    this.options.return_buffers === false ? 'string' : 'buffer')
 }
 inherits(Parser, EventEmitter)
 
@@ -59,7 +62,7 @@ Parser.prototype.execute = function (data) {
     }
     else if (this._state === BULK_DATA) {
       if (this._data.length - this._offset < this._size) { // Partial.
-        this.emit('reply partial', this._data.slice(this._offset))
+        this._reply_partial(this._data.slice(this._offset))
         this._size -= this._data.length - this._offset
         this._offset = this._data.length
       }
@@ -107,12 +110,22 @@ Parser.prototype.execute = function (data) {
   }
 }
 
+Parser.prototype._reply_partial = function (reply, type) {
+  if (this._multibulk) {
+    this._multibulk.items.push(reply)
+    reply = this._array_decoder.write(this._multibulk.items)
+    this._multibulk.items = []
+    if (!reply) return
+  }
+  this.emit('reply partial', reply)
+}
+
 Parser.prototype._reply = function (reply, type) {
   this._state = START
   if (this._multibulk) {
     this._multibulk.items.push(reply)
     if (--this._multibulk.count) return
-    reply = this._multibulk.items
+    reply = this._array_decoder.write(this._multibulk.items, true)
     this._multibulk = null
   }
   this.emit(type || 'reply', reply)
