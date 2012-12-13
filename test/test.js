@@ -37,10 +37,12 @@ var parser = new Parser
 socket.on('connect', function() {
   run(['PING'])
   run(['SET', 'foo', 'barbar'])
-  run(['STRLEN', 'foo'])
   run(['nosuchcommand'])
+  run(['MULTI'])
   run(['get', 'foo'])
-  run(['keys', '*'])
+  run(['keys', 'f*'])
+  run(['STRLEN', 'foo'])
+  run(['exec'])
   listenStdin()
 })
 
