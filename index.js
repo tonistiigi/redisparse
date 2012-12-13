@@ -115,7 +115,7 @@ Parser.prototype.execute = function (data) {
       else if (this._state === MULTI_BULK) {
         var count = +this._line
         if (count > 0) {
-          this._multibulk = new Multibulk(count)
+          this._multibulk = new Multibulk(count, this._multibulk)
           this._state = START
         }
         else if (count === 0) {
@@ -132,8 +132,7 @@ Parser.prototype.execute = function (data) {
 Parser.prototype._reply_partial = function (reply, type) {
   if (this._multibulk) {
     this._multibulk.items.push(reply)
-    reply = this._array_decoder.write(this._multibulk.items)
-    this._multibulk.items = []
+    reply = this._array_decoder.write(this._multibulk.flush())
     if (!reply) return
   }
   this.emit('reply partial', reply)
@@ -143,9 +142,11 @@ Parser.prototype._reply = function (reply, type) {
   this._state = START
   if (this._multibulk) {
     this._multibulk.items.push(reply)
-    if (--this._multibulk.count) return
-    reply = this._array_decoder.write(this._multibulk.items, true)
-    this._multibulk = null
+    do {
+      var multibulk = this._multibulk // remember after switch
+      if (--this._multibulk.count) return
+    } while (this._multibulk = this._multibulk.parent)
+    reply = this._array_decoder.write(multibulk.items, true)
   }
   this.emit(type || 'reply', reply)
 }
@@ -171,9 +172,20 @@ Parser.prototype._untilCRLF = function () {
   return this._line
 }
 
-function Multibulk(count) {
+function Multibulk(count, parent) {
   this.count = count
+  this.parent = parent // parent may not be good pattern because theres only 2 levels
   this.items = []
+  if (parent) {
+    parent.items.push(this.items)
+  }
+}
+
+Multibulk.prototype.flush = function() { // Pull current items out and clear.
+  var out = this.parent ? this.parent.items : this.items
+  this.items = []
+  if (this.parent) this.parent.items = [this.items]
+  return out
 }
 
 exports.Parser = Parser
