@@ -30,6 +30,8 @@ function slice(buffer, size, f) {
   }
 }
 
+console.log('These tests are just a sample/repl.')
+console.log('Use node_redis test suite to test the parser.')
 
 var socket = net.connect(6379)
 var parser = new Parser
