@@ -1,10 +1,10 @@
 {
   "name": "redisparse",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Streaming Redis response parser",
   "main": "parser.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/test"
   },
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
   "author": "Tõnis Tiigi <tonistiigi@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "array_decoder": "*"
+    "array_decoder": ">=0.1.0"
   },
   "devDependencies": {
     "optimist": "~0.3.5"
