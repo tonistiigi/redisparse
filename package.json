@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "optimist": "~0.3.5",
-    "JSONStream": "~0.4.2"
+    "JSONStream": "~0.4.2",
+    "v8-profiler": "~3.6.2-1",
+    "archy": "0.0.2"
   }
 }
