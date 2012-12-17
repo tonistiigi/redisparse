@@ -189,3 +189,5 @@ Multibulk.prototype.flush = function() { // Pull current items out and clear.
 }
 
 exports.Parser = Parser
+
+exports.name = 'redisparse'

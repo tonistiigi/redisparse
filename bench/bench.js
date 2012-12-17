@@ -1,7 +1,22 @@
 // Based on https://github.com/mranney/node_redis/blob/master/multi_bench.js
 var net = require('net')
-var Parser = require('../').Parser
 var argv = require('optimist').argv
+var parsers
+
+switch (argv.parser) {
+  case 'node_redis':
+    parsers = require('./comparison/node_redis')
+  break;
+  case 'hiredis':
+    parsers = require('./comparison/hiredis')
+  break;
+  case 'node_redis_old':
+    parsers = require('./comparison/node_redis_old')
+  break;
+  default:
+    parsers = require('../')
+}
+
 
 function send(socket, args) {
   socket.write('*' + args.length + '\r\n')
@@ -14,11 +29,11 @@ function send(socket, args) {
 
 
 function run(name, args, opt, cb) {
-  var return_buffers = (opt && opt.return_buffers) || false
-  var num_requests = (opt && opt.num_request) || 1e6
+  var return_buffers = opt.return_buffers || false
+  var num_requests = opt.num_request || 1e6
 
   var socket = net.connect(6379)
-  var parser = new Parser({return_buffers: return_buffers})
+  var parser = new parsers.Parser({return_buffers: return_buffers})
 
   var replies = 0
   parser.on('reply', function(d) {
@@ -58,7 +73,8 @@ function run(name, args, opt, cb) {
       }
     }
     var result = {}
-    result[name] = new Date - start
+    result[name] = {}
+    result[name][parsers.name] = new Date - start
     cb(result)
 
   })
