@@ -13,15 +13,12 @@ function send(socket, args) {
 }
 
 
-function Test(args, opt) {
-  this.args = args
-  this.return_buffers = (opt && opt.return_buffers) || false
-  this.num_requests = 1e6
-}
+function run(name, args, opt) {
+  var return_buffers = (opt && opt.return_buffers) || false
+  var num_requests = (opt && opt.num_request) || 1e6
 
-Test.prototype.run = function() {
   var socket = net.connect(6379)
-  var parser = new Parser({return_buffers: this.return_buffers})
+  var parser = new Parser({return_buffers: return_buffers})
 
   var replies = 0
   parser.on('reply', function(d) {
@@ -40,7 +37,7 @@ Test.prototype.run = function() {
     throw(e)
   })
 
-  send(socket, this.args)
+  send(socket, args)
   send(socket, ['quit'])
 
   var buffers = []
@@ -48,7 +45,6 @@ Test.prototype.run = function() {
     buffers.push(d)
   })
 
-  var self = this
   socket.on('end', function() {
     // Need to get the last +OK\r\n out of the response.
     // Probably a bad idea.
@@ -56,12 +52,12 @@ Test.prototype.run = function() {
     buffers[last] = buffers[last].slice(0, buffers[last].length - 5)
     if(!buffers[last].length) buffers.pop()
     var start = new Date
-    for (var i = 0; i < self.num_requests; i++) {
+    for (var i = 0; i < num_requests; i++) {
       for (var b = 0; b < buffers.length; b++) {
         parser.execute(buffers[b])
       }
     }
-    console.log(new Date - start)
+    console.log(name, new Date - start)
 
   })
 
@@ -74,5 +70,5 @@ var small_buf = new Buffer(small_str)
 var large_str = new Array(4097).join("-")
 var large_buf = new Buffer(large_str)
 
-var t = new Test(['PING'])
-t.run()
+run('ping', ['PING'])
+
