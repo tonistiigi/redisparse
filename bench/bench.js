@@ -15,7 +15,7 @@ function send(socket, args) {
 
 function Test(args, opt) {
   this.args = args
-  this.return_buffers = opt.return_buffers || false
+  this.return_buffers = (opt && opt.return_buffers) || false
   this.num_requests = 1e6
 }
 
@@ -40,9 +40,31 @@ Test.prototype.run = function() {
     throw(e)
   })
 
-  socket.on('data', parser.execute.bind(parser))
-
   send(socket, this.args)
+  send(socket, ['quit'])
+
+  var buffers = []
+  socket.on('data', function (d) {
+    buffers.push(d)
+  })
+
+  var self = this
+  socket.on('end', function() {
+    // Need to get the last +OK\r\n out of the response.
+    // Probably a bad idea.
+    var last = buffers.length - 1
+    buffers[last] = buffers[last].slice(0, buffers[last].length - 5)
+    if(!buffers[last].length) buffers.pop()
+    var start = new Date
+    for (var i = 0; i < self.num_requests; i++) {
+      for (var b = 0; b < buffers.length; b++) {
+        parser.execute(buffers[b])
+      }
+    }
+    console.log(new Date - start)
+
+  })
+
 
 }
 
@@ -52,4 +74,5 @@ var small_buf = new Buffer(small_str)
 var large_str = new Array(4097).join("-")
 var large_buf = new Buffer(large_str)
 
-
+var t = new Test(['PING'])
+t.run()
