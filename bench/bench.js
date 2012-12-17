@@ -1,7 +1,7 @@
 // Based on https://github.com/mranney/node_redis/blob/master/multi_bench.js
 var net = require('net')
 var Parser = require('../').Parser
-
+var argv = require('optimist').argv
 
 function send(socket, args) {
   socket.write('*' + args.length + '\r\n')
@@ -79,9 +79,13 @@ tests.hello = [['get', 'hello']]
 
 
 function runTests(keys) {
-  if (!keys.length) return stringify.end()
-  var key = keys.shift()
-  var test = tests[key]
+  while (true) {
+    if (!keys.length) return stringify.end()
+    var key = keys.shift()
+    var test = tests[key]
+    if (argv.filter && !new RegExp(argv.filter).test(key)) continue
+    else break
+  }
   run(key, test[0], test[1] || {}, function(result){
     stringify.write(result)
     runTests(keys)
