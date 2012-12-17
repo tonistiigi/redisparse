@@ -13,7 +13,7 @@ function send(socket, args) {
 }
 
 
-function run(name, args, opt) {
+function run(name, args, opt, cb) {
   var return_buffers = (opt && opt.return_buffers) || false
   var num_requests = (opt && opt.num_request) || 1e6
 
@@ -57,10 +57,11 @@ function run(name, args, opt) {
         parser.execute(buffers[b])
       }
     }
-    console.log(name, new Date - start)
+    var result = {}
+    result[name] = new Date - start
+    cb(result)
 
   })
-
 
 }
 
@@ -70,5 +71,23 @@ var small_buf = new Buffer(small_str)
 var large_str = new Array(4097).join("-")
 var large_buf = new Buffer(large_str)
 
-run('ping', ['PING'])
 
+var tests = {}
+tests.ping = [['ping']]
+tests.hello = [['get', 'hello']]
+
+
+
+function runTests(keys) {
+  if (!keys.length) return stringify.end()
+  var key = keys.shift()
+  var test = tests[key]
+  run(key, test[0], test[1] || {}, function(result){
+    stringify.write(result)
+    runTests(keys)
+  })
+}
+
+var stringify = require('JSONStream').stringify()
+stringify.pipe(process.stdout)
+runTests(Object.keys(tests))

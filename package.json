@@ -20,6 +20,7 @@
     "array_decoder": ">=0.1.0"
   },
   "devDependencies": {
-    "optimist": "~0.3.5"
+    "optimist": "~0.3.5",
+    "JSONStream": "~0.4.2"
   }
 }
