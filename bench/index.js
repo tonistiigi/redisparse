@@ -76,13 +76,12 @@ function run(name, args, opt, cb) {
       }
     }
     var result = {}
-    result[name] = {}
-    result[name][parsers.name] = {time: new Date - start}
+    result[parsers.name] = {time: new Date - start}
 
     if (argv.profiler) {
-      result[name][parsers.name]['profiler'] = require('./profiler').end()
+      result[parsers.name]['profiler'] = require('./profiler').end()
     }
-    cb(result)
+    cb(name, result)
 
   })
 
@@ -109,12 +108,12 @@ function runTests(keys) {
     if (argv.filter && !new RegExp(argv.filter).test(key)) continue
     else break
   }
-  run(key, test[0], test[1] || {}, function(result){
-    stringify.write(result)
+  run(key, test[0], test[1] || {}, function(){
+    stringify.write(arguments)
     runTests(keys)
   })
 }
 
-var stringify = require('JSONStream').stringify()
+var stringify = require('JSONStream').stringifyObject()
 stringify.pipe(process.stdout)
 runTests(Object.keys(tests))
