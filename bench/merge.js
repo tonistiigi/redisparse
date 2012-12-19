@@ -20,12 +20,20 @@ function run() {
   var json = {}
 
   files.forEach(function(input) {
-    for (var key in input) {
-      if (json.key) return
-      json[key] = files.reduce(function(memo, file) {
-        if (file[key]) {
-          for (var i in file[key]) {
-            memo[i] = file[key][i]
+    for (var test in input) {
+      if (json[test]) return
+      json[test] = files.reduce(function(memo, file) {
+        if (file[test]) {
+          for (var i in file[test]) {
+            if (memo[i]) {
+              if (!(memo[i].time instanceof Array)) {
+                memo[i].time = [memo[i].time]
+              }
+              memo[i].time.push(file[test][i].time)
+            }
+            else {
+              memo[i] = file[test][i]
+            }
           }
         }
         return memo
