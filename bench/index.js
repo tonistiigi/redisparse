@@ -66,24 +66,29 @@ function run(name, args, opt, cb) {
     var last = buffers.length - 1
     buffers[last] = buffers[last].slice(0, buffers[last].length - 5)
     if(!buffers[last].length) buffers.pop()
-    var start = new Date
+    run()
+
+  })
+
+  function run() {
+    var result = {}
+
     if (argv.profiler) {
       require('./profiler').start()
     }
+    var start = new Date
     for (var i = 0; i < num_requests; i++) {
       for (var b = 0; b < buffers.length; b++) {
         parser.execute(buffers[b])
       }
     }
-    var result = {}
     result[parsers.name] = {time: new Date - start}
 
     if (argv.profiler) {
       result[parsers.name]['profiler'] = require('./profiler').end()
     }
     cb(name, result)
-
-  })
+  }
 
 }
 
