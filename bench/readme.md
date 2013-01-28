@@ -8,6 +8,7 @@ Some command line utilities for analyzing benchmark data. Maybe sometime I'll mo
 ```
 node bench
 node bench --parser node_redis
+node bench --filter ping
 ```
 
 Available parsers include redisparse, node_redis, node_redis_old and hiredis. Defaults to redisparse.
