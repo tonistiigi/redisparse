@@ -30,7 +30,7 @@ function send(socket, args) {
 
 function run(name, args, opt, cb) {
   var return_buffers = opt.return_buffers || false
-  var num_requests = opt.num_request || 1e6
+  var num_requests = opt.num_requests || 1e6
 
   var socket = net.connect(6379)
   var parser = new parsers.Parser({return_buffers: return_buffers})
@@ -92,19 +92,6 @@ function run(name, args, opt, cb) {
 
 }
 
-
-var small_str = "1234"
-var small_buf = new Buffer(small_str)
-var large_str = new Array(4097).join("-")
-var large_buf = new Buffer(large_str)
-
-
-var tests = {}
-tests.ping = [['ping']]
-tests.hello = [['get', 'hello']]
-
-
-
 function runTests(keys) {
   while (true) {
     if (!keys.length) return stringify.end()
@@ -119,6 +106,46 @@ function runTests(keys) {
   })
 }
 
+
+var tests = {}
+tests.ping = [['ping']]
+tests.set_small_str = [['set', 'rpbench_small_str', '1234']]
+tests.get_small_str = [['get', 'rpbench_small_str']]
+tests.get_small_buf = [['get', 'rpbench_small_str'], {return_buffers: true}]
+tests.get_large_str = [['get', 'rpbench_large_str']]
+tests.get_large_buf = [['get', 'rpbench_large_str'], {return_buffers: true}]
+tests.incr = [['incr', 'rpbench_counter']]
+tests.lpush = [['lpush', "rpbench_list", '1234']]
+tests.lrange10 = [['lrange', "rpbench_lrange", '0', '9']]
+tests.lrange100 = [['lrange', "rpbench_lrange", '0', '99']]
+
+
+
+
+
+// prepare data:
+var socket = net.connect(6379)
+send(socket, ['set', 'rpbench_small_str', '1234'])
+send(socket, ['set', 'rpbench_large_str', new Array(4097).join("-")])
+send(socket, ['set', 'rpbench_counter', '100'])
+for (var i = 0; i < 100; i++)
+send(socket, ['lpush', 'rpbench_list', (i * 1234).toString()])
+send(socket, ['quit'])
+
+
+socket.on('end', function() {
+  runTests(Object.keys(tests))
+})
+
 var stringify = require('JSONStream').stringifyObject()
-stringify.pipe(process.stdout)
-runTests(Object.keys(tests))
+stringify.pipe(process.stdout, {end: false})
+
+stringify.on('end', function () {
+  // clear data:
+  // prepare data:
+  var socket = net.connect(6379)
+  send(socket, ['del', 'rpbench_small_str', 'rpbench_large_str', 'rpbench_counter', 'rpbench_list'])
+  send(socket, ['quit'])
+})
+
+
