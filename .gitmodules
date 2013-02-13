@@ -1,3 +1,6 @@
 [submodule "bench/comparison/hiredis"]
 	path = bench/comparison/hiredis
 	url = git://github.com/tonistiigi/hiredis-node.git
+[submodule "test/node_redis"]
+	path = test/node_redis
+	url = https://github.com/tonistiigi/node_redis.git
