@@ -1,3 +1,5 @@
+[![Build Status](https://secure.travis-ci.org/tonistiigi/redisparse.png)](http://travis-ci.org/tonistiigi/redisparse)
+
 ## redisparse
 
 Streaming Redis response parser.
