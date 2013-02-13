@@ -1,4 +1,7 @@
 language: node_js
 node_js:
   - 0.8
+before_install:
+  - npm install
+  - git submodule update --init
 script: "npm test && node test '' --slice 3"
