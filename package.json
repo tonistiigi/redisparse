@@ -14,6 +14,9 @@
     "redis",
     "parser"
   ],
+  "scripts": {
+    "test": "node test"
+  },
   "author": "Tõnis Tiigi <tonistiigi@gmail.com>",
   "license": "MIT",
   "dependencies": {
