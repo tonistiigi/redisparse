@@ -1,6 +1,6 @@
 {
   "name": "redisparse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Streaming Redis response parser",
   "main": "parser.js",
   "scripts": {
