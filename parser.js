@@ -12,6 +12,7 @@ var BULK_DATA = 0x6
 var MULTI_BULK = 0x7
 
 function Parser(options) {
+  this.name = exports.name
   this.options = options || {}
   this._state = START
   this._offset = 0
