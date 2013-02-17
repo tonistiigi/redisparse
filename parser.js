@@ -90,7 +90,9 @@ Parser.prototype.execute = function (data) {
               this._data.slice(this._offset, this._offset += this._size)))
           }
           else {
-            this._reply(this._data.toString('utf8', this._offset, this._offset += this._size))
+            this._reply(this._data.parent.utf8Slice(
+              this._offset + this._data.offset,
+              (this._offset += this._size) + this._data.offset))
           }
 
         }
