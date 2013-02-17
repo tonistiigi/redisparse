@@ -102,7 +102,25 @@ Parser.prototype.execute = function (data) {
         }
       }
     }
-    else if (this._untilCRLF()) {
+    else {
+      if (this._cr && this._data[this._offset] === 0xa) {
+        this._cr = false
+        this._line = this._line.substring(0, this._line.length - 1) // Remove buffered <CR>
+        this._offset++
+      }
+      else {
+        this._cr = false
+        while (this._data[this._offset] !== 0xd || this._data[this._offset + 1] !== 0xa) {
+          this._line += String.fromCharCode(this._data[this._offset])
+          if (this._offset + 1 === this._data.length) { // No more data.
+            if (this._data[this._offset] === 0x0d) this._cr = true // Remember last <CR>
+            return
+          }
+          this._offset++
+        }
+        this._offset += 2
+      }
+
       if (this._state === SINGLE) {
         this._reply(this._line)
       }
@@ -163,27 +181,6 @@ Parser.prototype._reply = function (reply, type) {
     reply = this._array_decoder.write(multibulk.items, true)
   }
   this.emit(type || 'reply', reply)
-}
-
-Parser.prototype._untilCRLF = function () {
-  if (this._cr && this._data[this._offset] === 0xa) {
-    this._cr = false
-    this._line = this._line.substring(0, this._line.length - 1) // Remove buffered <CR>
-    this._offset++
-  }
-  else {
-    while (this._data[this._offset] !== 0xd || this._data[this._offset + 1] !== 0xa) {
-      this._line += String.fromCharCode(this._data[this._offset])
-      this._offset++
-      if (this._offset === this._data.length) { // No more data.
-        if (this._data[this._offset - 1] === 0xd) this._cr = true // Remember last <CR>
-
-        return
-      }
-    }
-    this._offset += 2
-  }
-  return this._line
 }
 
 function Multibulk(count, parent) {
