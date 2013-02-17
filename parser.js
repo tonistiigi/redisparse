@@ -80,17 +80,17 @@ Parser.prototype.execute = function (data) {
         this._offset = this._data.length
       }
       else {
-        buffer = this._data.slice(this._offset, this._offset += this._size)
         if (this.options.return_buffers) {
-          this._reply(buffer)
+          this._reply(this._data.slice(this._offset, this._offset += this._size))
         }
         else {
           if (this._is_string_decoder) {
             this._is_string_decoder = false
-            this._reply(this._string_decoder.write(buffer))
+            this._reply(this._string_decoder.write(
+              this._data.slice(this._offset, this._offset += this._size)))
           }
           else {
-            this._reply(buffer.toString())
+            this._reply(this._data.toString('utf8', this._offset, this._offset += this._size))
           }
 
         }
