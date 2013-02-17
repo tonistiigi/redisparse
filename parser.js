@@ -1,6 +1,5 @@
 var EventEmitter = require('events').EventEmitter
 var inherits = require('util').inherits
-var StringDecoder = require('string_decoder').StringDecoder
 var ArrayDecoder = require('array_decoder').ArrayDecoder
 
 var START = 0x1
@@ -24,7 +23,8 @@ function Parser(options) {
   this._multibulk = null
   this._array_decoder = new ArrayDecoder(
     this.options.return_buffers ? 'buffer' : 'string')
-  this._string_decoder = new StringDecoder
+  this._string_decoder = null
+  this._is_string_decoder = false
 }
 inherits(Parser, EventEmitter)
 
@@ -70,6 +70,10 @@ Parser.prototype.execute = function (data) {
           this._reply_partial(buffer)
         }
         else {
+          if (!this._string_decoder) {
+            this._string_decoder = new (require('string_decoder').StringDecoder)
+          }
+          this._is_string_decoder = true
           this._reply_partial(this._string_decoder.write(buffer))
         }
         this._size -= this._data.length - this._offset
@@ -81,7 +85,14 @@ Parser.prototype.execute = function (data) {
           this._reply(buffer)
         }
         else {
-          this._reply(this._string_decoder.write(buffer))
+          if (this._is_string_decoder) {
+            this._is_string_decoder = false
+            this._reply(this._string_decoder.write(buffer))
+          }
+          else {
+            this._reply(buffer.toString())
+          }
+
         }
         this._offset += 2
         if (this._offset > this._data.length) {
