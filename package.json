@@ -25,7 +25,7 @@
   "devDependencies": {
     "optimist": "~0.3.5",
     "JSONStream": "~0.4.2",
-    "v8-profiler": "~3.6.2-1",
+    "v8-profiler": "git://github.com/tonsitiigi/v8-profiler.git#remove-heap-profiler",
     "archy": "0.0.2"
   }
 }

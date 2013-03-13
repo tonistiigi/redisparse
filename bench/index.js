@@ -133,7 +133,7 @@ send(socket, ['lpush', 'rpbench_list', (i * 1234).toString()])
 send(socket, ['quit'])
 
 
-socket.on('end', function() {
+socket.on('close', function() {
   runTests(Object.keys(tests))
 })
 
