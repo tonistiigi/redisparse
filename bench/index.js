@@ -112,12 +112,12 @@ tests.ping = [['ping']]
 tests.set_small_str = [['set', 'rpbench_small_str', '1234']]
 tests.get_small_str = [['get', 'rpbench_small_str']]
 tests.get_small_buf = [['get', 'rpbench_small_str'], {return_buffers: true}]
-tests.get_large_str = [['get', 'rpbench_large_str']]
+tests.get_large_str = [['get', 'rpbench_large_str'], {num_requests: 2e5}]
 tests.get_large_buf = [['get', 'rpbench_large_str'], {return_buffers: true}]
 tests.incr = [['incr', 'rpbench_counter']]
 tests.lpush = [['lpush', "rpbench_list", '1234']]
-tests.lrange10 = [['lrange', "rpbench_lrange", '0', '9']]
-tests.lrange100 = [['lrange', "rpbench_lrange", '0', '99']]
+tests.lrange10 = [['lrange', "rpbench_list", '0', '9'], {num_requests: 2e5}]
+tests.lrange100 = [['lrange', "rpbench_list", '0', '99'], {num_requests: 5e4}]
 
 
 

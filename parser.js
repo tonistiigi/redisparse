@@ -1,6 +1,5 @@
 var EventEmitter = require('events').EventEmitter
 var inherits = require('util').inherits
-var StringDecoder = require('string_decoder').StringDecoder
 var ArrayDecoder = require('array_decoder').ArrayDecoder
 
 var START = 0x1
@@ -12,10 +11,9 @@ var BULK_DATA = 0x6
 var MULTI_BULK = 0x7
 
 function Parser(options) {
+  this.name = exports.name
   this.options = options || {}
   this._state = START
-  this._offset = 0
-  this._data = null
   this._line = ''
   this._cr = false
   this._size = 0
@@ -23,7 +21,8 @@ function Parser(options) {
   this._multibulk = null
   this._array_decoder = new ArrayDecoder(
     this.options.return_buffers ? 'buffer' : 'string')
-  this._string_decoder = new StringDecoder
+  this._string_decoder = null
+  this._is_string_decoder = false
 }
 inherits(Parser, EventEmitter)
 
@@ -35,14 +34,13 @@ inherits(Parser, EventEmitter)
  */
 
 Parser.prototype.execute = function (data) {
-  this._data = data
-  this._offset = Math.min(this._skip, this._data.length)
-  this._skip -= this._offset
+  var offset = Math.min(this._skip, data.length)
+  this._skip -= offset
 
-  while (this._offset < this._data.length) {
+  while (offset < data.length) {
     if (this._state === START) {
       this._line = ''
-      switch (this._data[this._offset++]) {
+      switch (data[offset++]) {
         case 43: // +
           this._state = SINGLE
         break;
@@ -63,32 +61,63 @@ Parser.prototype.execute = function (data) {
       }
     }
     else if (this._state === BULK_DATA) {
-      if (this._data.length - this._offset < this._size) { // Partial.
-        var buffer = this._data.slice(this._offset)
+      if (data.length - offset < this._size) { // Partial.
+        var buffer = data.slice(offset)
         if (this.options.return_buffers) {
           this._reply_partial(buffer)
         }
         else {
+          if (!this._string_decoder) {
+            this._string_decoder = new (require('string_decoder').StringDecoder)
+          }
+          this._is_string_decoder = true
           this._reply_partial(this._string_decoder.write(buffer))
         }
-        this._size -= this._data.length - this._offset
-        this._offset = this._data.length
+        this._size -= data.length - offset
+        offset = data.length
       }
       else {
-        buffer = this._data.slice(this._offset, this._offset += this._size)
         if (this.options.return_buffers) {
-          this._reply(buffer)
+          this._reply(data.slice(offset, offset += this._size))
         }
         else {
-          this._reply(this._string_decoder.write(buffer))
+          if (this._is_string_decoder) {
+            this._is_string_decoder = false
+            this._reply(this._string_decoder.write(
+              data.slice(offset, offset += this._size)))
+          }
+          else {
+            this._reply(data.parent.utf8Slice(
+              offset + data.offset,
+              (offset += this._size) + data.offset))
+          }
+
         }
-        this._offset += 2
-        if (this._offset > this._data.length) {
-          this._skip = this._offset - this._data.length
+        offset += 2
+        if (offset > data.length) {
+          this._skip = offset - data.length
         }
       }
     }
-    else if (this._untilCRLF()) {
+    else {
+      if (this._cr && data[offset] === 0xa) {
+        this._cr = false
+        this._line = this._line.substring(0, this._line.length - 1) // Remove buffered <CR>
+        offset++
+      }
+      else {
+        this._cr = false
+        while (data[offset] !== 0xd || data[offset + 1] !== 0xa) {
+          this._line += String.fromCharCode(data[offset])
+          if (offset + 1 === data.length) { // No more data.
+            if (data[offset] === 0x0d) this._cr = true // Remember last <CR>
+            return
+          }
+          offset++
+        }
+        offset += 2
+      }
+
       if (this._state === SINGLE) {
         this._reply(this._line)
       }
@@ -149,27 +178,6 @@ Parser.prototype._reply = function (reply, type) {
     reply = this._array_decoder.write(multibulk.items, true)
   }
   this.emit(type || 'reply', reply)
-}
-
-Parser.prototype._untilCRLF = function () {
-  if (this._cr && this._data[this._offset] === 0xa) {
-    this._cr = false
-    this._line = this._line.substring(0, this._line.length - 1) // Remove buffered <CR>
-    this._offset++
-  }
-  else {
-    while (this._data[this._offset] !== 0xd || this._data[this._offset + 1] !== 0xa) {
-      this._line += String.fromCharCode(this._data[this._offset])
-      this._offset++
-      if (this._offset === this._data.length) { // No more data.
-        if (this._data[this._offset - 1] === 0xd) this._cr = true // Remember last <CR>
-
-        return
-      }
-    }
-    this._offset += 2
-  }
-  return this._line
 }
 
 function Multibulk(count, parent) {
